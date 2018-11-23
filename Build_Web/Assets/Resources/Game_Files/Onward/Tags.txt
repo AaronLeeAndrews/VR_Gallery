@@ -1,0 +1,4 @@
+Hard
+SingleMulti
+Action
+Shooter
