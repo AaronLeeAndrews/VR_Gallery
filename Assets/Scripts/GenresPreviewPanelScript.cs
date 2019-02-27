@@ -10,10 +10,10 @@ public class GenresPreviewPanelScript : MonoBehaviour {
     public GameObject topArrow, bottomArrow;
 
     int categoryChangeValue = 3;
-
-    // Use this for initialization
-    void Start () {
-	}
+    
+    void Start ()
+    {
+    }
 	
 	// Update is called once per frame
 	void Update () {
@@ -31,15 +31,18 @@ public class GenresPreviewPanelScript : MonoBehaviour {
 
     public void IncIdxsOfCategoryList()
     {
-        if (currCategoryIdx + categoryChangeValue < dataManagerGameObject.GetComponent<DataManager>().allCategoryFilters.Length)
+        int numberOfCatagories = dataManagerGameObject.GetComponent<DataManager>().allCategoryFilters.Length;
+
+        if (currCategoryIdx + categoryChangeValue < numberOfCatagories)
         {
             currCategoryIdx += categoryChangeValue;
         }
-        else
+
+        // Test if we are at the final categories in the list, and we can't inc any more
+        if (currCategoryIdx + categoryChangeValue >= numberOfCatagories)
         {
             // Deactivate the bottomArrow if all the way at the end of the category list
             bottomArrow.gameObject.SetActive(false);
-            return;
         }
 
         RefreshCategories();
@@ -79,11 +82,14 @@ public class GenresPreviewPanelScript : MonoBehaviour {
         for (int ii = 0; ii < listOfGameObjectCategories.Count; ++ii)
             listOfGameObjectCategories[ii].gameObject.SetActive(true);
 
+        int numberOfCatagories = dataManagerGameObject.GetComponent<DataManager>().allCategoryFilters.Length;
+
         for (int ii = 0; ii < listOfGameObjectCategories.Count; ++ii)
         {
-            if (ii + currCategoryIdx < dataManagerGameObject.GetComponent<DataManager>().allCategoryFilters.Length)
+            if (ii + currCategoryIdx < numberOfCatagories)
             {
                 listOfGameObjectCategories[ii].GetComponent<CategoryPanelStaticScript>().UpdateCurrCategoryIdx(ii + currCategoryIdx);
+                listOfGameObjectCategories[ii].GetComponent<CategoryPanelStaticScript>().RefreshGameImages();
             }
             else
                 listOfGameObjectCategories[ii].gameObject.SetActive(false);

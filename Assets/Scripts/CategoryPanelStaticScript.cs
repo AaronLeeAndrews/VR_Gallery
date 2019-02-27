@@ -11,7 +11,7 @@ public class CategoryPanelStaticScript : MonoBehaviour {
     public int currGameIdx;
     public Text nameText;
     public GameObject leftArrow, rightArrow;
-    public List<Image> listOfGameImages;
+    public List<GameObject> listOfGameImageParents;
 
     int gameListChangeValue;
     string categoryName;
@@ -21,7 +21,7 @@ public class CategoryPanelStaticScript : MonoBehaviour {
     void Start () {
         currCategoryIdx = 0;
         currGameIdx =     0;
-        gameListChangeValue = 4;
+        gameListChangeValue = listOfGameImageParents.Count;
     }
 
     public void UpdateCurrCategoryIdx(int newCategoryIdx)
@@ -83,19 +83,16 @@ public class CategoryPanelStaticScript : MonoBehaviour {
     // Deactivates any gameImages that go beyond the count of the gameDataIndexList
     public void RefreshGameImages()
     {
-        for (int ii = 0; ii < listOfGameImages.Count; ++ii)
+        for (int ii = 0; ii < listOfGameImageParents.Count; ++ii)
         {
-            // Activate any deactivated gameImages
-            listOfGameImages[ii].gameObject.SetActive(true);
-
             // Fill out the sprites of each GameImage
             if (ii + currGameIdx < gameDataIndexList.Count)
             {
-                listOfGameImages[ii].sprite = dataManagerGameObject.GetComponent<DataManager>().SpriteOfGameIdx(gameDataIndexList[ii + currGameIdx]);
-                listOfGameImages[ii].GetComponentInParent<GameImageScript>().gameDataIdx = gameDataIndexList[ii + currGameIdx];
+                listOfGameImageParents[ii].gameObject.SetActive(true);
+                listOfGameImageParents[ii].GetComponent<GameImageScript>().UpdateImageAndIndexWithGameIndex(gameDataIndexList[ii + currGameIdx]);
             }
             else
-                listOfGameImages[ii].gameObject.SetActive(false);
+                listOfGameImageParents[ii].gameObject.SetActive(false);
         }
     }
 

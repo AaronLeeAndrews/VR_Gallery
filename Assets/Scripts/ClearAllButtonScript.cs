@@ -10,6 +10,12 @@ public class ClearAllButtonScript : MonoBehaviour, IPointerEnterHandler, IPointe
     public Color regularColor;
     public Color highlightColor;
 
+    void OnEnable()
+    {
+        buttonText.color = regularColor;
+        theX.color = regularColor;
+    }
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         buttonText.color = highlightColor;

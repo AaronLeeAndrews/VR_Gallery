@@ -9,23 +9,13 @@ public class GameImageScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     float normalWidth = 195f, normalHeight = 108f;
     float hoverWidth = 215f, hoverHeight = 128f;
-
+    
     public int gameDataIdx;
     public Image imgPtr;
     public GameObject gamePreviewPtr;
     public GameObject backgroundHighlight;
     public GameObject dataManagerGameObject;
     public GameObject parentGameViewPtr;
-
-    // Use this for initialization
-    void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-
-    }
 
     //OnPointerDown is also required to receive OnPointerUp callbacks
     public void OnPointerDown(PointerEventData eventData)
@@ -60,5 +50,11 @@ public class GameImageScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
         imgPtr.gameObject.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, normalHeight);
 
         backgroundHighlight.gameObject.SetActive(false);
+    }
+
+    public void UpdateImageAndIndexWithGameIndex(int gameIdx)
+    {
+        gameDataIdx = gameIdx;
+        imgPtr.sprite = dataManagerGameObject.GetComponent<DataManager>().SpriteOfGameIdx(gameIdx);
     }
 }

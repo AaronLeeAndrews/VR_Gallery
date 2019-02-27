@@ -10,8 +10,14 @@ public class GamePreviewBackButton : MonoBehaviour, IPointerEnterHandler, IPoint
     public Color onColor, offColor;
     public GameObject gamePreviewObject;
 
+    public void OnEnable()
+    {
+        GetComponent<Image>().color = new Color(1, 1, 1, 0);
+    }
+
     public void OnPointerEnter(PointerEventData eventData)
     {
+        GetComponent<Image>().color = new Color(1, 1, 1, 1);
         buttonText.color = offColor;
     }
 

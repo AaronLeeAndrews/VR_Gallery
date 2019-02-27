@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 
 public class GamePreview : MonoBehaviour {
 
+    public GameObject dataManagerGameObject;
     public Image GameImagePtr;
     public Texture2D tex2d_Test;
     public Sprite spr_Test;
@@ -29,6 +30,22 @@ public class GamePreview : MonoBehaviour {
         vidPlayer.url = "null.mp4";
     }
 
+    public void Update()
+    {
+        if (vidPlayerPlane.activeSelf)
+        {
+            long playerCurrentFrame = vidPlayer.frame;
+            long playerFrameCount = System.Convert.ToInt64(vidPlayer.frameCount);
+
+            if (playerCurrentFrame >= playerFrameCount)
+            {
+                StopVideo();
+                previewPlayVideoToggle.GetComponent<Toggle>().isOn = false;
+                previewPlayVideoToggle.GetComponentInChildren<Text>().text = "Play";
+            }
+        }
+    }
+
     private void OnEnable()
     {
         for(int ii=0; ii < buttonHighlights.Count; ++ii)
@@ -40,6 +57,9 @@ public class GamePreview : MonoBehaviour {
             previewPlayVideoToggle.gameObject.SetActive(true);
         else
             previewPlayVideoToggle.gameObject.SetActive(false);
+
+        previewPlayVideoToggle.GetComponent<Toggle>().isOn = false;
+        previewPlayVideoToggle.GetComponentInChildren<Text>().text = "Play";
     }
 
     public void ResetValues()
@@ -133,15 +153,24 @@ public class GamePreview : MonoBehaviour {
 
     public void GetImageInListEntry()
     {
-        tex2d_Test = Resources.Load<Texture2D>(imageFileList[currImageListIdx]);
+        //byte[] imgByteArr = null;
+        //imgByteArr = System.IO.File.ReadAllBytes(imageFileList[currImageListIdx]);
+        //tex2d_Test = new Texture2D(100, 100);
+        //UnityEngine.ImageConversion.LoadImage(tex2d_Test, imgByteArr);
+        ////spr_Test = Sprite.Create(tex2d_Test, new Rect(0, 0, tex2d_Test.width, tex2d_Test.height), new Vector2(0, 0));
+        ////GameImagePtr.sprite = spr_Test;
+
+        string test = imageFileList[currImageListIdx].Substring(19);
+        test = test.Substring(0, test.Length-4);
+        tex2d_Test = Resources.Load<Texture2D>(test);
         spr_Test = Sprite.Create(tex2d_Test, new Rect(0, 0, tex2d_Test.width, tex2d_Test.height), new Vector2(0, 0));
         GameImagePtr.sprite = spr_Test;
 
-        //if (!GameImagePtr.gameObject.active)
-        //{
-        //    //previewPlayVideoToggle.GetComponent<PlayVideoToggle>().ToggleOff();
-        //    GameImagePtr.gameObject.SetActive(true);
-        //}
+        if (!GameImagePtr.gameObject.activeSelf)
+        {
+            previewPlayVideoToggle.GetComponent<PlayVideoToggle>().ToggleOff();
+            GameImagePtr.gameObject.SetActive(true);
+        }
     }
 
     public void IncrementImageListIdx()
@@ -156,49 +185,54 @@ public class GamePreview : MonoBehaviour {
 
     public void PlayVideo()
     {
+#if UNITY_WEBGL
         TextAsset txt = Resources.Load<TextAsset>(gameFileName + "/Vid");
         //Debug.Log(txt.text);
         CreateVideoDiv(txt.text);
+#endif
 
+   ////////////////////////////////
+
+#if UNITY_STANDALONE_WIN
         //Turn off the images plane for the game
-        //GameImagePtr.gameObject.SetActive(false);
+        GameImagePtr.gameObject.SetActive(false);
 
-        // Load up the video file
-        //if (System.IO.File.Exists(gameFileName + "/Vid.mp4"))
-        //{
-        //    vidPlayer.url = gameFileName + "/Vid.mp4";
-        //}
-        //else if (System.IO.File.Exists(gameFileName + "/Vid.txt"))
-        //{
-        //    string newUrl = Resources.Load<TextAsset>(gameFileName + "/Vid").text;
-        //    newUrl = Resources.Load<TextAsset>(gameFileName + "/Vid").text;
-        //Debug.Log(newUrl);
-        //    vidPlayer.url = newUrl;
-        //}
+        //Load up the video file
+        if (System.IO.File.Exists(gameFileName + "/Vid.mp4"))
+        {
+            vidPlayer.url = gameFileName + "/Vid.mp4";
+        }
+        else if (System.IO.File.Exists(gameFileName + "/Vid.txt"))
+        {
+            string newUrl = System.IO.File.ReadAllText(gameFileName + "/Vid.txt");
+            Debug.Log(newUrl);
+            vidPlayer.url = newUrl;
+        }
 
-        // Make sure we found a video
-        //if (vidPlayer.url != "null.mp4")
-        //{
-            // Turn on the video plane for the game
-            //vidPlayerPlane.SetActive(true);
-            //vidPlayer.gameObject.SetActive(true);
-            //vidPlayer.Play();
-        //}
-        //else
-        //{
-        //    previewPlayVideoToggle.GetComponent<PlayVideoToggle>().ToggleOff();
-        //}
+        //Make sure we found a video
+        if (vidPlayer.url != "null.mp4")
+        {
+            //Turn on the video plane for the game
+            vidPlayerPlane.SetActive(true);
+            vidPlayer.gameObject.SetActive(true);
+            vidPlayer.Play();
+        }
+        else
+        {
+            previewPlayVideoToggle.GetComponent<PlayVideoToggle>().ToggleOff();
+        }
+#endif
     }
 
     public void StopVideo()
     {
-        ////Turn on the images plane for the game
-        //GameImagePtr.gameObject.SetActive(true);
+        //Turn on the images plane for the game
+        GameImagePtr.gameObject.SetActive(true);
 
-        //// Turn off the video plane for the game
-        //vidPlayer.Stop();
-        //vidPlayerPlane.SetActive(false);
-        //vidPlayer.gameObject.SetActive(false);
+        // Turn off the video plane for the game
+        vidPlayer.Stop();
+        vidPlayerPlane.SetActive(false);
+        vidPlayer.gameObject.SetActive(false);
     }
 
     public bool VideoDoesExist()

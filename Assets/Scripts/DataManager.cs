@@ -14,7 +14,7 @@ public class DataManager : MonoBehaviour {
         public string[] gameCategories;
     }
 
-    public Sprite defualtSprite;
+    public Sprite defaultSprite;
     public GameObject gamePreviewPanel;
 
     List<int> currGameIdxInEachCategory;
@@ -24,7 +24,7 @@ public class DataManager : MonoBehaviour {
 
     string[] difficultyFilters = new string[] { "Easy", "Med.", "Hard" };
 
-    string[] singleMultiFilters = new string[] { "Single", "Multi" };
+    string[] singleMultiFilters = new string[] { "Single", "Multi" , "SingleMulti"};
 
     string[] categoryFilters = new string[] { "Shooter", "Action",
                                                 "Art", "Horror",
@@ -44,6 +44,34 @@ public class DataManager : MonoBehaviour {
                                                         "Simulation", "Movie",
                                                         "Adventure", "Fantasy"};
 
+
+    private static DataManager dataManager;
+
+    /// <summary>
+    /// The instance of dataManager that is holding the data for all games
+    /// </summary>
+    public static DataManager instance
+    {
+        get
+        {
+            if (!dataManager)
+            {
+                dataManager = FindObjectOfType(typeof(DataManager)) as DataManager;
+
+                if (!dataManager)
+                {
+                    Debug.LogError("There needs to be one active EventManger script on a GameObject in your scene.");
+                }
+                else
+                {
+                    dataManager.FillGameDataList();
+                }
+            }
+
+            return dataManager;
+        }
+    }
+
     // Use this for initialization
     void Start () {
         FillGameDataList();
@@ -54,15 +82,35 @@ public class DataManager : MonoBehaviour {
         gamePreviewPanel.SetActive(true);
     }
 
+    public int GetGameDataListCount()
+    {
+        return gameDataList.Count;
+    }
+
+    public string[] ReturnStringArrOfDifficulties()
+    {
+        return difficultyFilters;
+    }
+
+    public string[] ReturnStringArrOfSingleMulti()
+    {
+        return singleMultiFilters;
+    }
+
+    public string[] ReturnStringArrOfCategories()
+    {
+        return categoryFilters;
+    }
+
     public void FillGameDataList()
     {
-        gameDataList = new List<GameData>();
-        gameNameFileDirArr = Directory.GetDirectories((gameFileTopDir), "*", SearchOption.TopDirectoryOnly);
-        currGameIdxInEachCategory = new List<int>();
+        instance.gameDataList = new List<GameData>();
+        instance.gameNameFileDirArr = Directory.GetDirectories((gameFileTopDir), "*", SearchOption.TopDirectoryOnly);
+        instance.currGameIdxInEachCategory = new List<int>();
         for (int ii = 0; ii < allCategoryFilters.Length; ++ii)
-            currGameIdxInEachCategory.Add(0);
+            instance.currGameIdxInEachCategory.Add(0);
 
-        for (int ii = 0; ii < gameNameFileDirArr.Length; ++ii)
+        for (int ii = 0; ii < instance.gameNameFileDirArr.Length; ++ii)
         {
             GameData newGameDataItem;// = new GameData();
 
@@ -71,25 +119,30 @@ public class DataManager : MonoBehaviour {
             newGameDataItem.gameCategories = System.IO.File.ReadAllLines(newGameDataItem.gameNameFileDir + "/Tags.txt");
 
             // Put the new GameData item into the list
-            gameDataList.Add(newGameDataItem);
+            instance.gameDataList.Add(newGameDataItem);
         }
     }
 
     public string FileDirOfGameIdx(int gameIdx)
     {
-        return gameDataList[gameIdx].gameNameFileDir;
+        return instance.gameDataList[gameIdx].gameNameFileDir;
+    }
+
+    public string NameOfGameIdx(int gameIdx)
+    {
+        return instance.gameDataList[gameIdx].gameNameFileDir.Substring(30);
     }
 
     public Sprite SpriteOfGameIdx(int gameIdx)
     {
         byte[] imgByteArr = null;
         Texture2D tex2dTemp;
-        Sprite spriteTemp = defualtSprite;
+        Sprite spriteTemp = defaultSprite;
 
         // Check the file system for the image file
         if (System.IO.File.Exists(gameDataList[gameIdx].gameNameFileDir + "/Banner.png"))
             imgByteArr = System.IO.File.ReadAllBytes(gameDataList[gameIdx].gameNameFileDir + "/Banner.png");
-        else
+        else if (System.IO.File.Exists(gameDataList[gameIdx].gameNameFileDir + "/Banner.jpg"))
             imgByteArr = System.IO.File.ReadAllBytes(gameDataList[gameIdx].gameNameFileDir + "/Banner.jpg");
 
         // Create the Sprite as a Texture2d
@@ -103,9 +156,39 @@ public class DataManager : MonoBehaviour {
 
     public bool GameIsInCategory(int gameDataIdx, string category)
     {
-        for(int ii=0; ii<gameDataList[gameDataIdx].gameCategories.Length; ++ii)
+        for(int ii=0; ii< instance.gameDataList[gameDataIdx].gameCategories.Length; ++ii)
         {
-            if(gameDataList[gameDataIdx].gameCategories[ii] == category)
+            if(instance.gameDataList[gameDataIdx].gameCategories[ii] == category)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool GameIsInDifficultyCategory(int gameDataIdx, string category)
+    {
+        if (instance.gameDataList[gameDataIdx].gameCategories[0] == category)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public bool GameIsInSingleMultiCategory(int gameDataIdx, string category)
+    {
+        if(instance.gameDataList[gameDataIdx].gameCategories[1] == category || instance.gameDataList[gameDataIdx].gameCategories[1] == "SingleMulti")
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public bool GameIsInGenresCategory(int gameDataIdx, string category)
+    {
+        for (int ii = 2; ii < instance.gameDataList[gameDataIdx].gameCategories.Length; ++ii)
+        {
+            if (instance.gameDataList[gameDataIdx].gameCategories[ii] == category)
             {
                 return true;
             }
@@ -130,19 +213,19 @@ public class DataManager : MonoBehaviour {
 
     public string NameOfCategoryIdx(int categoryIdx)
     {
-        return allCategoryFilters[categoryIdx];
+        return instance.allCategoryFilters[categoryIdx];
     }
 
     public int CurrGameIdxOfCategoryIdx(int categoryIdx)
     {
-        if (currGameIdxInEachCategory == null)
+        if (instance.currGameIdxInEachCategory == null)
             return 0;
 
-        return currGameIdxInEachCategory[categoryIdx];
+        return instance.currGameIdxInEachCategory[categoryIdx];
     }
 
     public int UpdateIdxOfGameCategoryIdx(int newGameIdx, int categoryIdx)
     {
-        return currGameIdxInEachCategory[categoryIdx] = newGameIdx;
+        return instance.currGameIdxInEachCategory[categoryIdx] = newGameIdx;
     }
 }

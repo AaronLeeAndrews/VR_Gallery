@@ -31,7 +31,7 @@ public class PlayVideoToggle : MonoBehaviour, IPointerEnterHandler, IPointerExit
         }
         else
         {
-            //gamePreviewObject.GetComponent<GamePreview>().StopVideo();
+            gamePreviewObject.GetComponent<GamePreview>().StopVideo();
             buttonText.text = "Play";
         }
     }

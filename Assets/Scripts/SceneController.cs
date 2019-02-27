@@ -7,9 +7,12 @@ using System.IO;
 
 public class SceneController : MonoBehaviour
 {
-    string[] difficultyFilters = new string[] { "Easy", "Med.", "Hard"};
 
-    string[] singleMultiFilters = new string[] { "Single", "Multi"};
+    public GameObject dataManagerGameObject;
+
+    string[] difficultyFilters = new string[] { "Easy", "Med.", "Hard" };
+
+    string[] singleMultiFilters = new string[] { "Single", "Multi" };
 
     string[] categoryFilters = new string[] { "Shooter", "Action",
                                                 "Art", "Horror",
@@ -22,22 +25,16 @@ public class SceneController : MonoBehaviour
     Dictionary<string, bool> difficultyFilterDict = new Dictionary<string, bool>();
     Dictionary<string, bool> singleMultiFilterDict = new Dictionary<string, bool>();
     Dictionary<string, bool> categoryFilterDict = new Dictionary<string, bool>();
+    List<int> listOfFilteredGameIdx;
     bool noFiltersChecked;
 
     string[] str_arr;
     int gameCount;
-    float xInnerOffset = -100f, xOuterOffset = -150f, yInnerOffset = -45f, yOuterOffset = 390f;
-    float xLogoSize = 200f, yLogoSize = 100f;
 
     public GameObject genresViewPtr;
     public GameObject gamesViewPtr;
-    public GameObject gamesViewContentPtr;
-    public GameObject gamesPreviewPtr;
-    public GameObject prefab;
     public Button clearAllButtonPtr;
     public string introTextFile;
-    List<GameObject> gameLogoArr_masterlist;
-    List<GameObject> gameLogoArr_ptrlist;
 
     // Variables to track the use of the app and return to the intro page if idle for too long
     bool galleryInUse = false, userIsIdle = false;
@@ -46,12 +43,17 @@ public class SceneController : MonoBehaviour
     public GameObject introPanel;
     List<float> listOfAllSessionTimesRecordedToday;
     string currDate;
-    
+
 
     // Use this for initialization
-    void Start ()
+    void Start()
     {
         noFiltersChecked = true;
+        listOfFilteredGameIdx = new List<int>();
+
+        difficultyFilters = dataManagerGameObject.GetComponent<DataManager>().ReturnStringArrOfDifficulties();
+        singleMultiFilters = dataManagerGameObject.GetComponent<DataManager>().ReturnStringArrOfSingleMulti();
+        categoryFilters = dataManagerGameObject.GetComponent<DataManager>().ReturnStringArrOfCategories();
 
         for (int ii = 0; ii < difficultyFilters.Length; ++ii)
         {
@@ -66,10 +68,9 @@ public class SceneController : MonoBehaviour
             categoryFilterDict.Add(categoryFilters[ii], false);
         }
 
-        //str_arr = Directory.GetDirectories(("./Assets/Resources/Game_Files"), "*", SearchOption.TopDirectoryOnly);
-        //str_arr = Directory.GetDirectories(("./Assets/Resources/Game_Files"), "*", SearchOption.TopDirectoryOnly);
-        string gameDirsOnOneLine = Resources.Load<TextAsset>("Text/GameList").text;
-        str_arr = gameDirsOnOneLine.Split(new string[] { "\r\n" }, System.StringSplitOptions.RemoveEmptyEntries);
+        str_arr = Directory.GetDirectories(("./Assets/Resources/Game_Files"), "*", SearchOption.TopDirectoryOnly);
+        //string gameDirsOnOneLine = Resources.Load<TextAsset>("Text/GameList").text;
+        //str_arr = gameDirsOnOneLine.Split(new string[] { "\r\n" }, System.StringSplitOptions.RemoveEmptyEntries);
         gameCount = str_arr.Length;
         //Debug.Log(gameCount);
         //Debug.Log(str_arr.Length);
@@ -77,11 +78,6 @@ public class SceneController : MonoBehaviour
         //{
         //    Debug.Log(str_arr[ii]);
         //}
-        gameLogoArr_masterlist = new List<GameObject>();
-        if (prefab != null)
-            CreatePreviewImages();
-        else
-            Debug.Log("prefab is null!!!!");
 
         // Get the intro text from file
         TextAsset introTextFile = Resources.Load<TextAsset>("Text/IntroText");
@@ -133,53 +129,6 @@ public class SceneController : MonoBehaviour
         //RecordAndClearListOfSessionTimes();
     }
 
-    void CreatePreviewImages()
-    {
-        float xOffset, yOffset;
-        for (int ii = 0; ii < gameCount; ++ii)
-        {
-            //Add together the outer offsets, inner offsets, and length of the other logos
-            xOffset = xOuterOffset + (ii % 4) * (xLogoSize + xInnerOffset);
-            yOffset = yOuterOffset - (int)(ii / 4) * (yLogoSize + yInnerOffset);
-            gameLogoArr_masterlist.Add(Instantiate(prefab));
-            gameLogoArr_masterlist[ii].transform.SetParent(gamesViewContentPtr.transform);
-            gameLogoArr_masterlist[ii].GetComponent<Button_gameImageClass>().FillValues(str_arr[ii], 
-                                                                                        gamesPreviewPtr, gamesViewPtr);
-            gameLogoArr_masterlist[ii].GetComponent<RectTransform>().localPosition = new Vector3(xOffset, yOffset, 0);
-        }
-        gameLogoArr_ptrlist = new List<GameObject>(gameLogoArr_masterlist);
-    }
-
-    void RefreshPreviewImages()
-    {
-        float xOffset, yOffset;
-        for (int ii = 0; ii < gameLogoArr_ptrlist.Count; ++ii)
-        {
-            //Add together the outer offsets, inner offsets, and length of the other logos
-            xOffset = xOuterOffset + (ii % 4) * (xLogoSize + xInnerOffset);
-            yOffset = yOuterOffset - (int)(ii / 4) * (yLogoSize + yInnerOffset);
-            gameLogoArr_ptrlist[ii].GetComponent<RectTransform>().localPosition = new Vector3(xOffset, yOffset, 0);
-        }
-    }
-
-    public void FilterChanged()
-    {
-        if (noFiltersChecked) // If there were no other filters on, one is now on
-        {
-            noFiltersChecked = false;
-            clearAllButtonPtr.gameObject.SetActive(true);
-            gamesViewPtr.gameObject.SetActive(true);
-            genresViewPtr.gameObject.SetActive(false);
-        }
-        else // If the filter was just turned off, it might be the last one off, so check them all
-        {
-            CheckIfAnyFiltersAreOn();
-        }
-
-        CheckGamesAgainstFilters();
-        RefreshPreviewImages();
-    }
-
     public void DifficultyValueChanged(string key)
     {
         difficultyFilterDict[key] = !difficultyFilterDict[key];
@@ -199,7 +148,38 @@ public class SceneController : MonoBehaviour
         FilterChanged();
     }
 
-    void CheckIfAnyFiltersAreOn()
+    public void FilterChanged()
+    {
+        if (noFiltersChecked) // If there were no other filters on, one is now on
+        {
+            noFiltersChecked = false;
+            clearAllButtonPtr.gameObject.SetActive(true);
+            gamesViewPtr.gameObject.SetActive(true);
+            genresViewPtr.gameObject.SetActive(false);
+
+            CheckGamesAgainstFilters();
+            gamesViewPtr.GetComponent<GamePreviewPanelScript>().UpdateGameIdxList(listOfFilteredGameIdx);
+            gamesViewPtr.GetComponent<GamePreviewPanelScript>().RefreshPreviewImages();
+        }
+        else // If the filter was just turned off, it might be the last one off, so check them all
+        {
+            CheckIfAnyFiltersAreOn();
+    
+            if (noFiltersChecked)
+            {
+                gamesViewPtr.SetActive(false);
+                genresViewPtr.SetActive(true);
+            }
+             else
+            {
+                CheckGamesAgainstFilters();
+                gamesViewPtr.GetComponent<GamePreviewPanelScript>().UpdateGameIdxList(listOfFilteredGameIdx);
+                gamesViewPtr.GetComponent<GamePreviewPanelScript>().RefreshPreviewImages();
+            }   
+        }
+    }
+
+    public void CheckIfAnyFiltersAreOn()
     {
         noFiltersChecked = true;
         clearAllButtonPtr.gameObject.SetActive(false);
@@ -246,78 +226,91 @@ public class SceneController : MonoBehaviour
     {
         if (noFiltersChecked)
         {
-            for (int ii = 0; ii < gameLogoArr_masterlist.Count; ++ii) // Look through all of the games
-            {
-                gameLogoArr_masterlist[ii].SetActive(true);
-                gamesViewPtr.gameObject.SetActive(false);
-                genresViewPtr.gameObject.SetActive(true);
-            }
-            gameLogoArr_ptrlist = gameLogoArr_masterlist;
+            gamesViewPtr.gameObject.SetActive(false);
+            genresViewPtr.gameObject.SetActive(true);
         }
         else
         {
-            gameLogoArr_ptrlist = new List<GameObject>();
-
-            for (int ii = 0; ii < gameLogoArr_masterlist.Count; ++ii)
-            {
-                gameLogoArr_masterlist[ii].SetActive(true);
-            }
-
+            listOfFilteredGameIdx.Clear();
+            
             // Go through each game and see if they match the selected filters
             // If they match they will be added to the list of games to display
-            for (int ii = 0; ii < gameLogoArr_masterlist.Count; ++ii) // Look through all of the games
+            bool skipGame = true;
+            for (int ii = 0; ii < dataManagerGameObject.GetComponent<DataManager>().GetGameDataListCount(); ++ii)
             {
-                // Check any selected difficulty levels (Easy, Med., Hard)
-                if(difficultyFilterDict["Easy"] || difficultyFilterDict["Med."] || difficultyFilterDict["Hard"])
+                // Check selected difficulty levels (Easy, Med., Hard)
+                if (difficultyFilterDict["Easy"] || difficultyFilterDict["Med."] || difficultyFilterDict["Hard"])
                 {
-                    // The first index will be the difficulty, check if it is selected
-                    if(!difficultyFilterDict[gameLogoArr_masterlist[ii].GetComponent<Button_gameImageClass>().filters[0]])
+                    // Look through each difficulty category, if it is selected
+                    for (int jj = 0; jj < difficultyFilters.Length; ++jj)
                     {
-                        gameLogoArr_masterlist[ii].SetActive(false);
+                        if (difficultyFilterDict[difficultyFilters[jj]] &&
+                            dataManagerGameObject.GetComponent<DataManager>().GameIsInDifficultyCategory(ii, difficultyFilters[jj]))
+                        {
+                            skipGame = false;
+                            break;
+                        }
+                    }
+                    if (skipGame)
+                    {
                         continue; // The game isn't of the selected difficulty, so do not add to the list
                     }
                 }
-                
+
                 // Check if either selected single/multi
-                if (gameLogoArr_masterlist[ii].activeSelf &&
-                    (singleMultiFilterDict["Single"] || singleMultiFilterDict["Multi"]) &&
-                    gameLogoArr_masterlist[ii].GetComponent<Button_gameImageClass>().filters[1] != "SingleMulti")
+                skipGame = true;
+                if (singleMultiFilterDict["Single"] || singleMultiFilterDict["Multi"])
                 {
-                    // The second index will be the single/multi, check if it is selected
-                    if (!singleMultiFilterDict[gameLogoArr_masterlist[ii].GetComponent<Button_gameImageClass>().filters[1]])
+                    // Look through each single-multi category, if it is selected
+                    for (int jj = 0; jj < singleMultiFilters.Length; ++jj)
                     {
-                        gameLogoArr_masterlist[ii].SetActive(false);
-                        continue; // The game isn't of the selected single/multi, so do not add to the list
+                        if (singleMultiFilterDict[singleMultiFilters[jj]] &&
+                            dataManagerGameObject.GetComponent<DataManager>().GameIsInSingleMultiCategory(ii, singleMultiFilters[jj]))
+                        {
+                            skipGame = false;
+                            break;
+                        }
+                    }
+                    if (skipGame)
+                    {
+                        continue; // The game isn't of the selected difficulty, so do not add to the list
                     }
                 }
 
                 // Check against the category filters
-                foreach (var categoryFilter in categoryFilterDict)
+                skipGame = true;
+                if (AtLeastOneCategoryIsSelected())
                 {
-                    if (categoryFilter.Value)
+                    for (int jj = 0; jj < categoryFilters.Length; ++jj)
                     {
-                        bool categoryFilterIsFoundInGame = false;
-                        for (int jj = 2; jj < gameLogoArr_masterlist[ii].GetComponent<Button_gameImageClass>().filters.Length; ++jj) // Look through each game's filters
+                        // Make sure the category filter is turned on
+                        if (categoryFilterDict[categoryFilters[jj]] &&
+                           dataManagerGameObject.GetComponent<DataManager>().GameIsInGenresCategory(ii, categoryFilters[jj]))
                         {
-                            if (gameLogoArr_masterlist[ii].GetComponent<Button_gameImageClass>().filters[jj] == categoryFilter.Key)
-                            {
-                                categoryFilterIsFoundInGame = true;
-                                break;
-                            }
-                        }
-                        if (!categoryFilterIsFoundInGame)
-                        {
-                            gameLogoArr_masterlist[ii].SetActive(false);
-                            break; // The game isn't of the selected categories, so do not add to the list
+                            skipGame = false;
+                            break;
                         }
                     }
+                    if (skipGame)
+                    {
+                        continue; // The game isn't of the selected difficulty, so do not add to the list
+                    }
                 }
-                if(gameLogoArr_masterlist[ii].activeSelf)
-                {
-                    gameLogoArr_ptrlist.Add(gameLogoArr_masterlist[ii]);
-                }
+
+                //Passed all checks, so add the game to the list of games to display
+                listOfFilteredGameIdx.Add(ii);
             }
         }
+    }
+
+    bool AtLeastOneCategoryIsSelected()
+    {
+        for (int ii = 0; ii < categoryFilters.Length; ++ii)
+        {
+            if (categoryFilterDict[categoryFilters[ii]])
+                return true;
+        }
+        return false;
     }
 
     public void ClearAllFilters()
